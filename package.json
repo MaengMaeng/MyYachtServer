@@ -1,0 +1,25 @@
+{
+  "name": "my-yatch-server",
+  "version": "1.0.0",
+  "description": "```\r node server.js\r ```",
+  "main": "server.js",
+  "dependencies": {
+    "express": "^4.17.1",
+    "socket.io": "^3.1.1"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/MaengMaeng/MyYachtServer.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/MaengMaeng/MyYachtServer/issues"
+  },
+  "homepage": "https://github.com/MaengMaeng/MyYachtServer#readme"
+}
