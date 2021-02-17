@@ -1,4 +1,5 @@
 # 실행 방법
 ```
-node server.js
+npm install
+npm start
 ```
