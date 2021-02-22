@@ -11,25 +11,32 @@ const io = require('socket.io')(http, {
 
 const port = 8080;
 
-// io = [socket, socket]
 let roomNumber = 0;
-let member = 0;
-
+const gameRoom = [];
 
 io.on('connection', (socket) => {
     console.log('user connection');
 
-    if(member == 2){
-        roomNumber++;
-        member = 0;
-    }
-
-    console.log('room number : ', roomNumber);
-    socket.roomNumber = roomNumber;
-    socket.join(roomNumber);
-    member++;
-    console.log('member : ', member);
+    socket.on('matching', (data) => {
+        if(gameRoom.length){
+            socket.roomNumber = gameRoom.shift();
+            socket.join(socket.roomNumber);
+            
+            io.to(socket.roomNumber).emit('matched', '');
+        }
+        else{
+            gameRoom.push(roomNumber)
+            socket.roomNumber = roomNumber;
+            socket.join(roomNumber++);
+        }
+        console.log('room number : ', socket.roomNumber);
+    });
     
+    socket.on('matchingCancel', (data) => {
+        gameRoom.shift();
+        socket.leave(socket.roomNumber);
+    });
+
     socket.on('hold', (data) => {
         io.to(socket.roomNumber).emit('hold', data);
     });
