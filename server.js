@@ -14,7 +14,7 @@ const port = 8080;
 const pc = require("./PedigreeCalcurator.js");
 // io = [socket, socket]
 let roomNumber = 0;
-let memberNumber = 0;
+const gameRoom = [];
 
 const INIT_HOLD_DICES = [false, false, false, false, false];
 
@@ -25,25 +25,27 @@ function getRandomInt(min, max) {
 io.on("connection", (socket) => {
   console.log("user connection");
 
-  if (memberNumber % 2 == 0) {
-    roomNumber++;
-  }
+  socket.on("matching", (data) => {
+    if (gameRoom.length) {
+      socket.roomNumber = gameRoom.shift();
+      socket.join(socket.roomNumber);
 
-  console.log("room number : ", roomNumber);
-  socket.roomNumber = roomNumber;
-  socket.memberNumber = memberNumber;
-  socket.join(roomNumber);
-  memberNumber++;
-  console.log("member : ", memberNumber);
+      io.to(socket.roomNumber).emit("matched", "");
 
-  if (memberNumber % 2 == 0) {
-    /*
-    만약에 재접속시 두명다 turn을 갖게되는 경우 생길수 있음
-    전체적인 코드(memeberNumber++ 등) 변경 시, 같이 보수할 것 
-    */
-    // 나를 제외한 방에 있는 사람들에게
-    socket.broadcast.to(socket.roomNumber).emit("submit", true);
-  }
+      // 나를 제외한 방에 있는 사람들에게 turn 부여
+      socket.broadcast.to(socket.roomNumber).emit("submit", true);
+    } else {
+      gameRoom.push(roomNumber);
+      socket.roomNumber = roomNumber;
+      socket.join(roomNumber++);
+    }
+    console.log("room number : ", socket.roomNumber);
+  });
+
+  socket.on("matchingCancel", (data) => {
+    gameRoom.shift();
+    socket.leave(socket.roomNumber);
+  });
 
   socket.on("roll", (data) => {
     // roll dice
