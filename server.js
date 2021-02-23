@@ -42,10 +42,11 @@ io.on("connection", (socket) => {
     전체적인 코드(memeberNumber++ 등) 변경 시, 같이 보수할 것 
     */
     // 나를 제외한 방에 있는 사람들에게
-    socket.broadcast.to(socket.roomNumber).emit("next_turn", true);
+    socket.broadcast.to(socket.roomNumber).emit("submit", true);
   }
 
   socket.on("roll", (data) => {
+    // roll dice
     let dices = data.dices.slice();
     let holddDices = data.holddDices.slice();
     let rollDices = [];
@@ -57,6 +58,10 @@ io.on("connection", (socket) => {
       }
     }
     io.to(socket.roomNumber).emit("roll", rollDices);
+
+    // roll count
+    let rollCount = data.rollCount;
+    io.to(socket.roomNumber).emit("roll_count", rollCount + 1);
 
     const counts = pc.makeCountArray(rollDices);
     // 족보 계산값
@@ -77,11 +82,13 @@ io.on("connection", (socket) => {
     io.to(socket.roomNumber).emit("pre_calcurate", calcuratedData);
   });
 
-  socket.on("next_turn", () => {
-    io.to(socket.id).emit("next_turn", false); // 자신은 turn false.
-    socket.broadcast.to(socket.roomNumber).emit("next_turn", true);
+  socket.on("submit", () => {
+    io.to(socket.id).emit("submit", false); // 자신은 turn false.
+    socket.broadcast.to(socket.roomNumber).emit("submit", true);
 
     io.to(socket.roomNumber).emit("hold", INIT_HOLD_DICES);
+
+    io.to(socket.roomNumber).emit("roll_count", 0);
   });
 
   socket.on("hold", (data) => {
