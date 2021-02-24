@@ -11,7 +11,7 @@ const io = require("socket.io")(http, {
 
 const port = 8080;
 
-const pc = require("./PedigreeCalcurator.js");
+const pc = require("./PedigreeCalculator.js");
 // io = [socket, socket]
 let roomNumber = 0;
 const gameRoom = [];
@@ -59,15 +59,15 @@ io.on("connection", (socket) => {
         rollDices.push(getRandomInt(1, 6));
       }
     }
-    io.to(socket.roomNumber).emit("roll", rollDices);
+    io.to(socket.roomNumber).emit("rollDices", rollDices);
 
     // roll count
     let rollCount = data.rollCount;
-    io.to(socket.roomNumber).emit("roll_count", rollCount + 1);
+    io.to(socket.roomNumber).emit("countRolls", rollCount + 1);
 
     const counts = pc.makeCountArray(rollDices);
     // 족보 계산값
-    const calcuratedData = {
+    const calculatedData = {
       Aces: pc.calSingle(counts, 1),
       Duces: pc.calSingle(counts, 2),
       Threes: pc.calSingle(counts, 3),
@@ -81,20 +81,34 @@ io.on("connection", (socket) => {
       "Large Straight": pc.calLargeStraight(counts),
       Yacht: pc.calYatch(counts),
     };
-    io.to(socket.roomNumber).emit("pre_calcurate", calcuratedData);
+
+    io.to(socket.id).emit("preCalculateMyScore", calculatedData);
+    socket.broadcast
+      .to(socket.roomNumber)
+      .emit("preCalculateRivalScore", calculatedData);
   });
 
   socket.on("submit", () => {
+    io.to(socket.roomNumber).emit("holdPedigree", "");
+
     io.to(socket.id).emit("submit", false); // 자신은 turn false.
     socket.broadcast.to(socket.roomNumber).emit("submit", true);
 
+    // init
     io.to(socket.roomNumber).emit("hold", INIT_HOLD_DICES);
-
-    io.to(socket.roomNumber).emit("roll_count", 0);
+    io.to(socket.roomNumber).emit("countRolls", 0);
+    // io.to(socket.roomNumber).emit("preCalculateMyScore", calculatedData);
+    // io.to(socket.id).emit("preCalculateMyScore", {});
+    // socket.broadcast
+    //   .to(socket.roomNumber)
+    //   .emit("preCalculateRivalScore", {});
   });
 
   socket.on("hold", (data) => {
     io.to(socket.roomNumber).emit("hold", data);
+  });
+  socket.on("holdPedigree", (data) => {
+    io.to(socket.roomNumber).emit("holdPedigree", data);
   });
 });
 
