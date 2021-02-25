@@ -89,6 +89,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on("submit", () => {
+    // turn 부여보다 먼저해야함
     io.to(socket.roomNumber).emit("holdPedigree", "");
 
     io.to(socket.id).emit("submit", false); // 자신은 turn false.
