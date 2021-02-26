@@ -11,6 +11,7 @@ const io = require("socket.io")(http, {
 
 const port = 8080;
 
+const pc = require("./PedigreeCalculator.js");
 // io = [socket, socket]
 let roomNumber = 0;
 const gameRoom = [];
@@ -20,16 +21,15 @@ const INIT_HOLD_DICES = [false, false, false, false, false];
 function getRandomInt(min, max) {
   return Math.floor(Math.random() * (max - min + 1)) + min;
 }
+let turnCount = 0;
 
 io.on("connection", (socket) => {
   console.log("user connection");
-
   const game = {
-    player1: {},
-    player2: {},
-    rollCount: 0,
+    score: {},
     dices: [],
-    turnNumber: 0,
+    holdPedigree: "",
+    rollCount: 0,
   };
 
   socket.on("matching", (data) => {
@@ -75,26 +75,44 @@ io.on("connection", (socket) => {
   });
 
   socket.on("submit", () => {
-    // turn 부여보다 먼저해야함
+    const holdPedigreeTitle = game.holdPedigree;
+    const pediScore = pc.calculate(holdPedigreeTitle, game.dices);
+    if (pediScore.holdPedigree) {
+      // 이미 존재하는 족보에 대한 처리
+      console.log("족보에 이미 기재되어있음");
+    }
+
+    game.score[holdPedigreeTitle] = pediScore;
+    console.log(game);
+
+    // 초기화 작업
+    // turn 부여보다 먼저해야지만 화면이 자연스럽다. 수정할 것
     io.to(socket.roomNumber).emit("holdPedigree", "");
+
+    io.to(socket.roomNumber).emit("hold", INIT_HOLD_DICES);
+
+    game.rollCount = 0;
+    io.to(socket.roomNumber).emit("countRolls", game.rollCount);
+    turnCount++;
+    console.log("turnCount", turnCount);
+
+    io.to(socket.id).emit("updateScore", game.score, true); // 내 점수
+    socket.broadcast
+      .to(socket.roomNumber)
+      .emit("updateScore", game.score, false); // 상대 점수
+
+    game.dices = [];
+    io.to(socket.roomNumber).emit("rollDices", []);
 
     io.to(socket.id).emit("submit", false); // 자신은 turn false.
     socket.broadcast.to(socket.roomNumber).emit("submit", true);
-
-    // init
-    io.to(socket.roomNumber).emit("hold", INIT_HOLD_DICES);
-    io.to(socket.roomNumber).emit("countRolls", 0);
-    // io.to(socket.roomNumber).emit("preCalculateMyScore", calculatedData);
-    // io.to(socket.id).emit("preCalculateMyScore", {});
-    // socket.broadcast
-    //   .to(socket.roomNumber)
-    //   .emit("preCalculateRivalScore", {});
   });
 
   socket.on("hold", (data) => {
     io.to(socket.roomNumber).emit("hold", data);
   });
   socket.on("holdPedigree", (data) => {
+    game.holdPedigree = data;
     io.to(socket.roomNumber).emit("holdPedigree", data);
   });
 });
