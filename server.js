@@ -11,7 +11,6 @@ const io = require("socket.io")(http, {
 
 const port = 8080;
 
-const pc = require("./PedigreeCalculator.js");
 // io = [socket, socket]
 let roomNumber = 0;
 const gameRoom = [];
@@ -24,6 +23,14 @@ function getRandomInt(min, max) {
 
 io.on("connection", (socket) => {
   console.log("user connection");
+
+  const game = {
+    player1: {},
+    player2: {},
+    rollCount: 0,
+    dices: [],
+    turnNumber: 0,
+  };
 
   socket.on("matching", (data) => {
     if (gameRoom.length) {
@@ -49,43 +56,22 @@ io.on("connection", (socket) => {
 
   socket.on("roll", (data) => {
     // roll dice
-    let dices = data.dices.slice();
-    let holddDices = data.holddDices.slice();
+    let holddDices = data.slice();
     let rollDices = [];
     for (let i = 0; i < 5; i++) {
       if (holddDices[i]) {
-        rollDices.push(dices[i]);
+        rollDices.push(game.dices[i]);
       } else {
         rollDices.push(getRandomInt(1, 6));
       }
     }
+    game.dices = rollDices;
     io.to(socket.roomNumber).emit("rollDices", rollDices);
 
     // roll count
-    let rollCount = data.rollCount;
-    io.to(socket.roomNumber).emit("countRolls", rollCount + 1);
-
-    const counts = pc.makeCountArray(rollDices);
-    // 족보 계산값
-    const calculatedData = {
-      Aces: pc.calSingle(counts, 1),
-      Duces: pc.calSingle(counts, 2),
-      Threes: pc.calSingle(counts, 3),
-      Fours: pc.calSingle(counts, 4),
-      Fives: pc.calSingle(counts, 5),
-      Sixes: pc.calSingle(counts, 6),
-      Choice: pc.calSum(counts),
-      "4 Of a Kind": pc.cal4OfAKind(counts),
-      "Full House": pc.calFullHouse(counts),
-      "Small Straight": pc.calSmallStraight(counts),
-      "Large Straight": pc.calLargeStraight(counts),
-      Yacht: pc.calYatch(counts),
-    };
-
-    io.to(socket.id).emit("preCalculateMyScore", calculatedData);
-    socket.broadcast
-      .to(socket.roomNumber)
-      .emit("preCalculateRivalScore", calculatedData);
+    let rollCount = game.rollCount + 1;
+    game.rollCount = rollCount;
+    io.to(socket.roomNumber).emit("countRolls", rollCount);
   });
 
   socket.on("submit", () => {
