@@ -55,13 +55,51 @@ const calYatch = (counts) => {
   return flag ? 50 : 0;
 };
 
+const calculate = (title, dice) => {
+  let result = 0;
+  const counts = makeCountArray(dice);
+  switch (title) {
+    case "Aces":
+      result = calSingle(counts, 1);
+      break;
+    case "Duces":
+      result = calSingle(counts, 2);
+      break;
+    case "Threes":
+      result = calSingle(counts, 3);
+      break;
+    case "Fours":
+      result = calSingle(counts, 4);
+      break;
+    case "Fives":
+      result = calSingle(counts, 5);
+      break;
+    case "Sixes":
+      result = calSingle(counts, 6);
+      break;
+    case "Choice":
+      result = calSum(counts);
+      break;
+    case "4 Of a Kind":
+      result = cal4OfAKind(counts);
+      break;
+    case "Full House":
+      result = calFullHouse(counts);
+      break;
+    case "Small Straight":
+      result = calSmallStraight(counts);
+      break;
+    case "Large Straight":
+      result = calLargeStraight(counts);
+      break;
+    case "Yacht":
+      result = calYatch(counts);
+      break;
+    default:
+      break;
+  }
+  return result;
+};
 module.exports = {
-  makeCountArray,
-  calSum,
-  calSingle,
-  cal4OfAKind,
-  calFullHouse,
-  calSmallStraight,
-  calLargeStraight,
-  calYatch,
+  calculate,
 };
