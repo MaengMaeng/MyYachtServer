@@ -72,12 +72,16 @@ io.on("connection", (socket) => {
       }
     }
     io.to(socket.roomNumber).game.dices = rollDices;
-    io.to(socket.roomNumber).emit("rollDices", rollDices);
+    // io.to(socket.roomNumber).emit("rollDices", rollDices);
 
     // roll count
     let rollCount = io.to(socket.roomNumber).game.rollCount + 1;
     io.to(socket.roomNumber).game.rollCount = rollCount;
-    io.to(socket.roomNumber).emit("countRolls", rollCount);
+    // io.to(socket.roomNumber).emit("countRolls", rollCount);
+
+    /* renewall */
+    io.to(socket.roomNumber).emit("roll", io.to(socket.roomNumber).game);
+    console.log(io.to(socket.roomNumber).game);
   });
 
   socket.on("submit", () => {
